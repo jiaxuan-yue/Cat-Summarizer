@@ -1,0 +1,494 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>笔记管理 - AI Page Summarizer</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+      font-size: 14px;
+      line-height: 1.6;
+      color: #37352f;
+      background: #f7f7f5;
+      min-height: 100vh;
+    }
+
+    .container {
+      max-width: 900px;
+      margin: 0 auto;
+      padding: 32px 24px;
+    }
+
+    .header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 32px;
+      padding-bottom: 16px;
+      border-bottom: 1px solid #e0e0e0;
+    }
+
+    .header h1 {
+      font-size: 24px;
+      font-weight: 600;
+      color: #1a1a1a;
+    }
+
+    .header-actions {
+      display: flex;
+      gap: 12px;
+    }
+
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 10px 16px;
+      font-size: 14px;
+      font-weight: 500;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .btn-primary {
+      background: #0066ff;
+      color: #fff;
+    }
+
+    .btn-primary:hover {
+      background: #0052cc;
+    }
+
+    .btn-secondary {
+      background: #f1f1f1;
+      color: #333;
+    }
+
+    .btn-secondary:hover {
+      background: #e0e0e0;
+    }
+
+    .btn-danger {
+      background: #ffeef0;
+      color: #d93025;
+    }
+
+    .btn-danger:hover {
+      background: #ffe0e3;
+    }
+
+    /* 空状态 */
+    .empty-state {
+      text-align: center;
+      padding: 64px 24px;
+      color: #999;
+    }
+
+    .empty-state-icon {
+      font-size: 48px;
+      margin-bottom: 16px;
+    }
+
+    /* 网页分组卡片 */
+    .page-card {
+      background: #fff;
+      border-radius: 12px;
+      margin-bottom: 20px;
+      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+      overflow: hidden;
+      transition: box-shadow 0.2s;
+    }
+
+    .page-card:hover {
+      box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
+    }
+
+    .page-card.collapsed .page-content {
+      display: none;
+    }
+
+    .page-card.collapsed .collapse-btn {
+      transform: rotate(-90deg);
+    }
+
+    .page-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 16px 20px;
+      background: linear-gradient(to right, #f8f9fa, #fff);
+      border-bottom: 1px solid #e0e0e0;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+
+    .page-header:hover {
+      background: linear-gradient(to right, #f0f1f2, #fff);
+    }
+
+    .page-info {
+      flex: 1;
+      min-width: 0;
+    }
+
+    .page-title {
+      font-size: 16px;
+      font-weight: 600;
+      color: #1a1a1a;
+      margin-bottom: 4px;
+    }
+
+    .page-url {
+      font-size: 12px;
+      color: #666;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      max-width: 400px;
+    }
+
+    .page-meta {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .page-meta .badge {
+      display: inline-flex;
+      align-items: center;
+      padding: 4px 10px;
+      background: #e8f0fe;
+      color: #1967d2;
+      border-radius: 12px;
+      font-size: 12px;
+      font-weight: 500;
+    }
+
+    .page-meta .time {
+      font-size: 12px;
+      color: #999;
+    }
+
+    .collapse-btn {
+      width: 24px;
+      height: 24px;
+      border: none;
+      background: #f1f1f1;
+      border-radius: 50%;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: transform 0.2s;
+    }
+
+    .collapse-btn:hover {
+      background: #e0e0e0;
+    }
+
+    .page-content {
+      padding: 20px;
+    }
+
+    .page-content .main-link {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 8px 16px;
+      background: #e8f0fe;
+      color: #1967d2;
+      border-radius: 8px;
+      text-decoration: none;
+      font-size: 13px;
+      font-weight: 500;
+      margin-bottom: 20px;
+      transition: background 0.2s;
+    }
+
+    .page-content .main-link:hover {
+      background: #d2e3fc;
+    }
+
+    .section {
+      margin-bottom: 24px;
+    }
+
+    .section:last-child {
+      margin-bottom: 0;
+    }
+
+    .section-title {
+      font-size: 14px;
+      font-weight: 600;
+      color: #37352f;
+      margin-bottom: 12px;
+      padding-bottom: 8px;
+      border-bottom: 2px solid #e0e0e0;
+    }
+
+    /* 高亮项目 */
+    .highlight-item {
+      background: #fff9db;
+      border-left: 4px solid #ffd43b;
+      border-radius: 8px;
+      padding: 14px 16px;
+      margin-bottom: 12px;
+      transition: transform 0.1s;
+    }
+
+    .highlight-item:hover {
+      transform: translateX(4px);
+    }
+
+    .highlight-item:last-child {
+      margin-bottom: 0;
+    }
+
+    .highlight-text {
+      font-size: 14px;
+      line-height: 1.6;
+      color: #333;
+      margin-bottom: 8px;
+      font-weight: 500;
+    }
+
+    .highlight-annotation {
+      background: rgba(255, 255, 255, 0.7);
+      padding: 10px 12px;
+      border-radius: 6px;
+      font-size: 13px;
+      color: #555;
+      margin-bottom: 8px;
+    }
+
+    .highlight-annotation::before {
+      content: '📝 ';
+      font-weight: 500;
+    }
+
+    .highlight-meta {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 12px;
+      color: #888;
+    }
+
+    .highlight-actions {
+      display: flex;
+      gap: 8px;
+    }
+
+    .highlight-actions button {
+      padding: 4px 10px;
+      font-size: 12px;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+      background: rgba(0, 0, 0, 0.05);
+      color: #d93025;
+      transition: background 0.2s;
+    }
+
+    .highlight-actions button:hover {
+      background: rgba(217, 48, 37, 0.1);
+    }
+
+    /* 总结项目 */
+    .summary-item {
+      background: #f7f7f5;
+      border-radius: 8px;
+      padding: 16px;
+      margin-bottom: 12px;
+      transition: background 0.2s;
+    }
+
+    .summary-item:hover {
+      background: #efefeb;
+    }
+
+    .summary-item:last-child {
+      margin-bottom: 0;
+    }
+
+    .summary-title {
+      font-size: 15px;
+      font-weight: 600;
+      color: #1a1a1a;
+      margin-bottom: 10px;
+    }
+
+    .summary-content {
+      font-size: 14px;
+      line-height: 1.7;
+      color: #555;
+      margin-bottom: 10px;
+      max-height: 150px;
+      overflow-y: auto;
+      white-space: pre-wrap;
+    }
+
+    .summary-meta {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 12px;
+      color: #888;
+    }
+
+    .summary-meta span {
+      margin-right: 12px;
+    }
+
+    .summary-meta button {
+      padding: 4px 10px;
+      font-size: 12px;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+      background: rgba(0, 0, 0, 0.05);
+      color: #d93025;
+      transition: background 0.2s;
+    }
+
+    .summary-meta button:hover {
+      background: rgba(217, 48, 37, 0.1);
+    }
+
+    .empty-section {
+      text-align: center;
+      color: #999;
+      font-size: 13px;
+      padding: 20px;
+    }
+
+    /* 导出下拉菜单 */
+    .dropdown {
+      position: relative;
+      display: inline-block;
+    }
+
+    .dropdown-menu {
+      position: absolute;
+      top: 100%;
+      right: 0;
+      background: #fff;
+      border-radius: 8px;
+      box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
+      padding: 8px 0;
+      min-width: 160px;
+      z-index: 1000;
+      display: none;
+    }
+
+    .dropdown-menu.show {
+      display: block;
+    }
+
+    .dropdown-item {
+      display: block;
+      width: 100%;
+      padding: 8px 16px;
+      border: none;
+      background: none;
+      text-align: left;
+      cursor: pointer;
+      font-size: 14px;
+      color: #333;
+      transition: background 0.2s;
+    }
+
+    .dropdown-item:hover {
+      background: #f1f1f1;
+    }
+
+    /* 深色模式 */
+    @media (prefers-color-scheme: dark) {
+      body {
+        background: #1a1a1a;
+        color: #e0e0e0;
+      }
+      .header { border-bottom-color: #444; }
+      .header h1 { color: #f0f0f0; }
+      .btn-secondary { background: #2d2d2d; color: #e0e0e0; }
+      .btn-secondary:hover { background: #3d3d3d; }
+      .dropdown-menu { background: #2d2d2d; box-shadow: 0 4px 16px rgba(0,0,0,0.3); }
+      .dropdown-item { color: #e0e0e0; }
+      .dropdown-item:hover { background: #3d3d3d; }
+      .empty-state { color: #888; }
+
+      /* 网页分组卡片深色模式 */
+      .page-card { background: #2d2d2d; box-shadow: 0 2px 6px rgba(0,0,0,0.3); }
+      .page-header { background: linear-gradient(to right, #2a2a2a, #2d2d2d); border-bottom-color: #444; }
+      .page-header:hover { background: linear-gradient(to right, #333, #2d2d2d); }
+      .page-title { color: #f0f0f0; }
+      .page-url { color: #aaa; }
+      .page-meta .badge { background: #1a3a5c; color: #8ab4f8; }
+      .collapse-btn { background: #3d3d3d; }
+      .collapse-btn:hover { background: #4d4d4d; }
+      .page-content .main-link { background: #1a3a5c; color: #8ab4f8; }
+      .page-content .main-link:hover { background: #254a6c; }
+      .section-title { color: #e0e0e0; border-bottom-color: #444; }
+
+      /* 高亮项目深色模式 */
+      .highlight-item { background: #3d3010; border-left-color: #ffd43b; }
+      .highlight-text { color: #e0e0e0; }
+      .highlight-annotation { background: rgba(255,255,255,0.1); color: #ccc; }
+      .highlight-meta { color: #888; }
+      .highlight-actions button { background: rgba(255,255,255,0.1); }
+      .highlight-actions button:hover { background: rgba(217,48,37,0.2); }
+
+      /* 总结项目深色模式 */
+      .summary-item { background: #1e1e1e; }
+      .summary-item:hover { background: #2a2a2a; }
+      .summary-title { color: #f0f0f0; }
+      .summary-content { color: #ccc; }
+      .summary-meta { color: #888; }
+      .summary-meta button { background: rgba(255,255,255,0.1); }
+      .summary-meta button:hover { background: rgba(217,48,37,0.2); }
+      .empty-section { color: #666; }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <h1>📚 笔记管理</h1>
+      <div class="header-actions">
+        <div class="dropdown">
+          <button class="btn btn-secondary" id="exportBtn">
+            📥 导出
+          </button>
+          <div class="dropdown-menu" id="exportMenu">
+            <button class="dropdown-item" data-type="all">导出所有笔记</button>
+            <button class="dropdown-item" data-type="highlights">导出高亮</button>
+            <button class="dropdown-item" data-type="summaries">导出总结</button>
+          </div>
+        </div>
+        <button class="btn btn-primary" id="refreshBtn">🔄 刷新</button>
+      </div>
+    </div>
+
+    <div id="content">
+      <div class="empty-state">
+        <div class="empty-state-icon">📝</div>
+        <p>加载中...</p>
+      </div>
+    </div>
+  </div>
+
+  <script src="storage/fs-storage.js"></script>
+  <script src="storage/webdav-client.js"></script>
+  <script src="storage.js"></script>
+  <script src="manager.js"></script>
+</body>
+</html>

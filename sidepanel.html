@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AI Page Summarizer</title>
+  <link rel="stylesheet" href="sidepanel.css">
+</head>
+<body>
+  <div class="container">
+    <main class="main">
+      <!-- 总结类型切换按钮 -->
+      <div class="summary-view-toggle">
+        <button class="toggle-btn active" data-view="page">网页总结</button>
+        <button class="toggle-btn" data-view="highlights">高亮总结</button>
+      </div>
+
+      <!-- 生成总结按钮 - 网页总结 -->
+      <button id="summarizePageBtn" class="btn btn-primary summarize-page-btn">
+        📄 生成网页总结
+      </button>
+
+      <!-- 生成总结按钮 - 高亮总结 -->
+      <button id="summarizeHighlightsBtn" class="btn btn-primary summarize-highlights-btn" hidden>
+        📌 生成高亮总结
+      </button>
+
+      <!-- 高亮总结显示区 - 显示高亮列表 -->
+      <div id="highlightsSection" class="highlights-section" hidden>
+        <div class="section-header">
+          <h3>📌 本页高亮</h3>
+          <span id="highlightCount" class="badge">0</span>
+        </div>
+        <div id="highlightsList" class="highlights-list">
+          <p class="empty-message">暂无高亮，选中文本后右键添加</p>
+        </div>
+      </div>
+
+      <div id="loading" class="loading" hidden>
+        <div class="spinner"></div>
+        <p>正在分析页面内容...</p>
+      </div>
+
+      <!-- 网页总结显示区 -->
+      <div id="result-page" class="result result-page" hidden>
+        <div class="result-header">
+          <h2 id="pageTitle-page">页面标题</h2>
+        </div>
+        <div class="summary">
+          <div id="summaryContent-page"></div>
+        </div>
+      </div>
+
+      <!-- 高亮总结显示区 -->
+      <div id="result-highlights" class="result result-highlights" hidden>
+        <div class="result-header">
+          <h2 id="pageTitle-highlights">页面标题</h2>
+        </div>
+        <div class="summary">
+          <div id="summaryContent-highlights"></div>
+        </div>
+      </div>
+
+      <div id="error" class="error" hidden>
+        <p id="errorMessage"></p>
+      </div>
+
+      <!-- 底部操作按钮（在两个页面同一位置） -->
+      <footer class="footer" id="footer" hidden>
+        <div class="footer-actions">
+          <button id="copyBtn" class="btn btn-secondary">
+            📋 复制
+          </button>
+          <button id="saveBtn" class="btn btn-primary">
+            💾 保存
+          </button>
+        </div>
+      </footer>
+    </main>
+  </div>
+
+  <script src="storage/fs-storage.js"></script>
+  <script src="storage/webdav-client.js"></script>
+  <script src="storage.js"></script>
+  <script src="sidepanel.js"></script>
+</body>
+</html>
