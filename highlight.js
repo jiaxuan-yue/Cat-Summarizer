@@ -321,10 +321,11 @@
     currentSelection.removeAllRanges();
   }
 
-  // 保存高亮数据
-  function saveHighlightData(highlightData) {
+  // 保存高亮数据 - 同时保存到 chrome.storage.local 和通知 Storage 模块
+  async function saveHighlightData(highlightData) {
     const url = window.location.href;
 
+    // 保存到 chrome.storage.local（这是内容脚本的主要存储方式）
     chrome.storage.local.get('highlights', (data) => {
       const allHighlights = data.highlights || {};
       if (!allHighlights[url]) {
@@ -335,10 +336,11 @@
       chrome.storage.local.set({ highlights: allHighlights }, () => {
         highlights.push(highlightData);
         renderHighlight(highlightData);
-        console.log('[AI Highlight] Highlight saved');
+        console.log('[AI Highlight] Highlight saved to chrome.storage.local');
       });
     });
 
+    // 通知 sidepanel 和其他页面数据已更新
     if (chrome.runtime) {
       chrome.runtime.sendMessage({
         action: 'highlightCreated',
